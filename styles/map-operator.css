@@ -1,0 +1,19 @@
+textarea {
+	display: block;
+}
+
+#code-input, #code-output {
+	font-family: monospace;
+    font-size: 13px;
+	width: 45%;
+	margin-top: 1em;
+}
+
+#code-input {
+	height: 280px;
+}
+
+#code-output {
+	display: none;
+	height: 180px;
+}
