@@ -3,8 +3,9 @@ A proposed JS operator with shim
 
 The JS map operator allows property access and method execution on all objects in an array.
 
-###Examples
-####Method call
+
+##Examples
+###Method call
 ```js
 Player = class Player {
     constructor() {
@@ -29,7 +30,7 @@ with `[]` map operator:
 players[].setMood('happy');
 ```
 
-####Property access
+###Property access
 ```js
 var obj = [
     {id: 1},
@@ -49,7 +50,7 @@ obj[].id;
 output:
 `> [1, 2, null, undefined]`
 
-####Custom method call
+###Custom method call
 ```js
 var list = [1, 2, 3, 4, 5];
 ```
@@ -62,7 +63,7 @@ with `[]` map operator:
 list[](n => n * 2)
 ```
 
-####Deep access
+###Deep access
 ```js
 var products = [{
     id: 100,
@@ -99,15 +100,15 @@ products.forEach(prod => {
 products[].bins[][](bin => bin * 10)
 ```
 
-####To-do
+##To-do
 - Babel plugin
 - Extend functionality to array-like objects like NodeList, to allow `$('div')[].style`
-- Allow siltent failing on deep property access using Proxies
+- Allow silent failing on deep property access using Proxies
 - Tests!
 - A stricter mode that fails when there's a null or missing property
 - An even stricter mode that allow the map operator only on arrays containing objects of the same class
 
-###The shim
+##The shim
 The shim simulates the map operator functionality by extending the `Array.prototype` with an empty string property.
 Usage:
 ```js
