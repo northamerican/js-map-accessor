@@ -3,6 +3,8 @@ A proposed JS operator with shim
 
 The JS map operator allows property access and method execution on all objects in an array.
 
+<a href="https://cdn.rawgit.com/northamerican/js-map-operator/master/index.html">**Demo**</a>
+Outputs in console.
 
 ##Examples
 ###Method call
