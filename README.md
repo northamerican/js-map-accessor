@@ -13,6 +13,7 @@ Player = class Player {
 
     setMood(mood) {
         this.mood = mood;
+        return this.mood;
     }
 }
 
