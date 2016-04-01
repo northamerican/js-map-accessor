@@ -17,3 +17,15 @@ textarea {
 	display: none;
 	height: 180px;
 }
+
+#element-example {
+	display: flex;
+	width: 45%;
+}
+
+#element-example > div {
+	width: 60px;
+	height: 60px;
+	margin-right: 10px;
+	background-color: #ffdddd;
+}

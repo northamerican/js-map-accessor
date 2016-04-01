@@ -4,6 +4,11 @@
 (() => {
     'strict mode';
 
+    // The internal name used for the shim
+    if(!window.mapOperatorShimMethodName) {
+        var mapOperatorShimMethodName = '';
+    }
+
     var MappedArray = function MappedArray() {
         if (!arguments[0] instanceof Function) return this;
 
@@ -16,7 +21,7 @@
         return result;
     }
 
-    Object.defineProperty(Array.prototype, '', {
+    Object.defineProperty(Array.prototype, mapOperatorShimMethodName, {
         get: function() {
             var propertiesInArray = {};
             var methods = MappedArray; //new MappedArray?
@@ -74,9 +79,6 @@
                             return this.map(objInArray => {
                                 if(!(objInArray instanceof Object)) return objInArray;
 
-                                // Unwrap an array of arrays, removing the need to multiply the operator "[][]"
-                                // if(propertyType === 'array') {
-
                                 var propertyValue = objInArray[propertyName];
 
                                 return propertyValue;
@@ -100,60 +102,3 @@
         }
     });
 })();
-
-// Extend functionality to array-like objects:
-NodeList.prototype[''] = Array.prototype[''];
-
-
-////////////////
-
-Player = class Player {
-    constructor() {
-        this.mood = 'sad';
-    }
-
-    setMood(mood) {
-        return this.mood = mood;
-    }
-}
-
-var players = [new Player(), new Player()]; 
-
-
-
-// to do:
-// live example
-// babel plugin
-// NodeList examples, if any good
-// proxies allowing silent failing deep access
-// tests
-
-
-// Tests
-// (() => {
-
-//     var assertions = [];
-//     var can = (assertion) => 
-
-//     can('assign to properties', () => {
-//         Player = class Player {
-//             constructor() {
-//                 this.mood = 'sad';
-//             }
-
-//             setMood(mood) {
-//                 this.mood = mood;
-//             }
-//         }
-
-//         var players = [new Player(), new Player()];
-
-//         players[[]].mood = 'angry';
-
-//         () => {
-//             return players[0].mood === 'angry' && players.mood[1] === 'angry'
-//         })
-//     })();
-
-// })();
-
