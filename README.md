@@ -65,7 +65,7 @@ with `[]` map operator:
 list[](n => n * 2)
 ```
 
-###Deep access
+###Deep property access
 ```js
 var products = [{
     id: 100,
