@@ -20,7 +20,7 @@ Player = class Player {
     }
 }
 
-var players = [new Player(), new Player()];
+let players = [new Player(), new Player()];
 ```
 
 Set mood for all players:
@@ -34,7 +34,7 @@ players[].setMood('happy');
 
 ###Property access
 ```js
-var obj = [
+let list = [
     {id: 1},
     {id: 2},
     null,
@@ -43,18 +43,18 @@ var obj = [
 ```
 Standard Array map, ignoring `null` and assuming `[]` would fail silently on missing properties:
 ```js
-obj.map(p => p === null ? null : p.id);
+list.map(p => p === null ? null : p.id);
 ``` 
 with `[]` map operator:
 ```js
-obj[].id;
+list[].id;
 ```
 output:
 `> [1, 2, null, undefined]`
 
 ###Custom method call
 ```js
-var list = [1, 2, 3, 4, 5];
+let list = [1, 2, 3, 4, 5];
 ```
 Alter and overwrite numbers in an array:
 ```js
@@ -67,7 +67,7 @@ list[](n => n * 2)
 
 ###Deep property access
 ```js
-var products = [{
+let products = [{
     id: 100,
     bins: [15, 16]
 }, {
