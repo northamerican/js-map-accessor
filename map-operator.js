@@ -1,30 +1,50 @@
-// Map operator "[]" shim 
-// arr[[]] works as arr[]
+// Map operator "[]"
 
 (() => {
     'strict mode';
 
-    // The internal name used for the shim
-    if(!window.mapOperatorShimMethodName) {
-        var mapOperatorShimMethodName = '';
-    }
-
-    var MappedArray = function MappedArray() {
-        if (!arguments[0] instanceof Function) return this;
-
-        var result = Array.prototype.map.apply(this, arguments);
-
-        // Replace the array with the mapped result
-        this.splice(0);
-        this.push(...result);
-
-        return result;
-    }
-
-    Object.defineProperty(Array.prototype, mapOperatorShimMethodName, {
-        get: function() {
+    Object.defineProperty(Array.prototype, '_mapOperator', {
+        get() {
+            // var _typeOf = function() {
+            //     Object.assign(propertiesInArray, {
+            //         // PropertyName: PropertyType
+            //         [propertyName]: (() => {
+            //             if(property === null) {
+            //                 return 'null';
+            //             } else if (property instanceof Function) {
+            //                 return 'function';
+            //             } else {
+            //                 return typeof property;
+            //             }
+            //         })()
+            //     });
+            // };
             var propertiesInArray = {};
-            var methods = MappedArray; //new MappedArray?
+            var mappedArray = function mappedArray() {
+                var args = Array.from(arguments);
+                var isFunction = args[0] instanceof Function;
+
+                if(isFunction) {
+                    var result = this.map(args[0], this);
+
+                    // Replace the array with the mapped result
+                    // if passing a non-function
+                    this.splice(0);
+                    this.concat(result);
+
+                    return result
+                    // return this.map(args[0], this);
+                } else {
+                    var result = this.map(() => JSON.parse(JSON.stringify(args[0])), this);
+
+                    // Replace the array with the mapped result
+                    // if passing a non-function
+                    this.splice(0);
+                    this.concat(result);
+
+                    return result
+                }
+            };
 
             // Add the keys of every property in each
             // of the array's objects to the propertiesInArray object.
@@ -33,15 +53,12 @@
 
                 var objectPrototype = Object.getPrototypeOf(objInArray);
                 // Get the keys of the object, including the keys of its direct parent prototype
-                var propertiesInObject = [...Object.keys(objInArray), ...Object.getOwnPropertyNames(objectPrototype)];
+                var propertiesInObject = Object.keys(objInArray).concat(Object.getOwnPropertyNames(objectPrototype));
 
                 // For each property of this object,
-                // Record the type of this property so it can be properly used by the map operator 
+                // record its type so its behavior can be set later
                 propertiesInObject.forEach(propertyName => {
                     var property = objInArray[propertyName];
-
-                    //! Check for matching types among all objects in the array and throw if there's a mismatch
-                    //! "TypeError: 'id' in objects must be same type."
 
                     Object.assign(propertiesInArray, {
                         // PropertyName: PropertyType
@@ -62,19 +79,22 @@
             // of the original array's object's properties.
             Object.keys(propertiesInArray).forEach(propertyName => {
                 var propertyType = propertiesInArray[propertyName];
+                var self = this;
 
-                //! probably necessary
-                delete methods[propertyName];
+                if(propertyName in mappedArray) return; //! this skips non-enumerable methods like constructor and __proto__. yay or nay?
 
                 if(propertyType === 'function') {
-                    Object.defineProperty(methods, propertyName, {
-                        value: (...args) => {
-                            return this.map(objInArray => objInArray[propertyName](...args));
+                    Object.defineProperty(mappedArray, propertyName, {
+                        value: function() { // (...arguments) =>
+                            return self.map(objInArray => {
+                                console.log(objInArray)
+                                return objInArray[propertyName](...Array.from(arguments));
+                            });
                         },
                         configurable: true
                     });
                 } else {
-                    Object.defineProperty(methods, propertyName, {
+                    Object.defineProperty(mappedArray, propertyName, {
                         get: () => {
                             return this.map(objInArray => {
                                 if(!(objInArray instanceof Object)) return objInArray;
@@ -98,7 +118,7 @@
                 }
             });
 
-            return methods;
+            return mappedArray;
         }
     });
 })();

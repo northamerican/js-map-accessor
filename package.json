@@ -1,0 +1,31 @@
+{
+  "name": "js-map-operator",
+  "version": "1.0.0",
+  "description": "a proposed operator for js",
+  "main": "map-operator.js",
+  "scripts": {
+    "test": "map-operator-test.js && ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/northamerican/js-map-operator.git"
+  },
+  "keywords": [
+    "js",
+    "ecmascript",
+    "ecma",
+    "es",
+    "proposed",
+    "proposal",
+    "operator"
+  ],
+  "author": "northamerican",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/northamerican/js-map-operator/issues"
+  },
+  "homepage": "https://github.com/northamerican/js-map-operator#readme",
+  "devDependencies": {
+    "ava": "^0.14.0"
+  }
+}
