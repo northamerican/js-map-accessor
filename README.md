@@ -99,7 +99,7 @@ products.forEach(prod => {
 })
 ```
 ```js
-products[].bins[][](bin => bin * 10)
+products = products[].bins[][](bin => bin * 10)
 ```
 
 ##To-do
