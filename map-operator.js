@@ -72,19 +72,24 @@
                 let isLastPath = index === mapOperatorPaths.length - 1;
 
                 return (obj, i) => {
-                    let targetObj;
+                    let targetObj = obj;
                     let property;
-                    let isLastProperty = isLastPath && i === propertiesPath.length - 1
+                    let isLastProperty = isLastPath && i === propertiesPath.length - 1;
 
+                    console.log('accessing deep paths, properties:', propertiesPath)
                     // Access the deep object targeted by the current path
                     for (property of propertiesPath) {
-                        // if (isLastProperty) break;
-                        targetObj = obj[property];
+                        if (isLastProperty) break;
+                        targetObj = targetObj[property];
+
+                        console.log(property)
+                        console.log('results', targetObj)
 
                         // Proxy or throw error here
                     }
 
                     if (isLastPath) {
+                        console.log('obj[property]', property)
                         obj[property] = fn.call(self, targetObj, i);
                     } else {
                         targetObj = targetObj.map(accessProperty(index + 1));
