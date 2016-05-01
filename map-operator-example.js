@@ -25,8 +25,9 @@ var evaledCodeResult = () => {
 	return evaled;
 }
 var applyCodeAndPrint = () => {
-	$codeOutput.value = '> ' + evaledCodeResult() + '\n' + $codeOutput.value;
-	$codeInput.select();
+    evaledCodeResult()
+	// $codeOutput.value = '> ' + evaledCodeResult() + '\n' + $codeOutput.value;
+	// $codeInput.select();
 }
 
 if(typeof document !== 'undefined') {
