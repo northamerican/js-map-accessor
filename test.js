@@ -25,7 +25,7 @@ test('map operator loaded', t => {
     t.truthy(arr);
 });
 
-(() => {
+test('access property in constructed object', t => {
     let Player = function() {
         this.mood = 'sad';
     }
@@ -36,16 +36,38 @@ test('map operator loaded', t => {
 
     let players = [new Player(), new Player()];
 
-    test('call method in each object in array', t => {
-        players[mapOperatorKey].setMood('happy');
-        t.deepEqual([players[0].mood, players[1].mood], ['happy', 'happy']);
-    });
+    let result = players[mapOperatorKey].mood;
+    t.deepEqual(result, ['sad', 'sad']);
+});
 
-    test('write to property in each object in array', t => {
-        players[mapOperatorKey].mood = 'angry';
-        t.deepEqual([players[0].mood, players[1].mood], ['angry', 'angry']);
-    });
-})();
+test('call method in each object in array', t => {
+    let Player = function() {
+        this.mood = 'sad';
+    }
+    Player.prototype.setMood = function(mood) {
+        this.mood = mood;
+        return this.mood;
+    }
+
+    let players = [new Player(), new Player()];
+    players[mapOperatorKey].setMood('happy');
+    t.deepEqual([players[0].mood, players[1].mood], ['happy', 'happy']);
+});
+
+test('write to property in each object in array', t => {
+    let Player = function() {
+        this.mood = 'sad';
+    }
+    Player.prototype.setMood = function(mood) {
+        this.mood = mood;
+        return this.mood;
+    }
+
+    let players = [new Player(), new Player()];
+
+    players[mapOperatorKey].mood = 'angry';
+    t.deepEqual([players[0].mood, players[1].mood], ['angry', 'angry']);
+});
 
 test('property access', t => {
     let list = [
@@ -68,7 +90,7 @@ test('property access', t => {
 //     t.throws(list[mapOperatorKey].id);
 // });
 
-//! ^ same but deep null
+// ! ^ same but deep null
 
 test('custom function call on each object in array', t => {
     let list = [1, 2, 3, 4, 5];
@@ -112,6 +134,7 @@ test('call prototype method on properties in array', t => {
     let result = list[mapOperatorKey](n => [10]);
 
     result[mapOperatorKey].push(20);
+
     t.deepEqual(result, [[10, 20], [10, 20], [10, 20]]);
 });
 
@@ -170,18 +193,28 @@ test('set nested objects in array', t => {
         { a: { b: 15 } }
     ];
 
-    let result = list[mapOperatorKey].a.b = 20;
+    list[mapOperatorKey].a.b = 20;
 
-    t.deepEqual(result, [
+    t.deepEqual(list, [
         { a: { b: 20 } },
         { a: { b: 20 } }
     ]);
 });
 
+test('call array of functions', t => {
+    let greetings = [
+        function(name) {
+            return `hello, ${name}`;
+        },
+        function(name) {
+            return `goodbye, ${name}`;
+        }
+    ];
 
+    let greeted = greetings[mapOperatorKey]('shiba');
 
-
-
+    t.deepEqual(greeted, ['hello, shiba', 'goodbye, shiba'])
+});
 
 // test('deep access of index in array', t => {
 //     let list = [
@@ -190,7 +223,7 @@ test('set nested objects in array', t => {
 //         { a: [{ b: 30 }, { b: 35 }] }
 //     ];
 
-//     list = list[mapOperatorKey].a[0].b;
+//     list = list[mapOperatorKey].a[mapOperatorKey][0].b;
 
 //     t.deepEqual(list, [10, 20]);
 // });
@@ -209,38 +242,4 @@ test('set nested objects in array', t => {
 //         { a: [{ b: 5 }, { b: 25 }] },
 //         { a: [{ b: 5 }, { b: 35 }] }
 //     ]);
-// });
-
-
-
-
-// deep property set, get, method call, fn.
-
-
-// [fn, fn]()
-
-// test('throw on mismatched property types', t => {
-
-// });
-
-
-
-// list[mapOperatorKey].a[mapOperatorKey].b[mapOperatorKey] = 30
-
-// test('deep array manipulation', t => {
-//     let albums = [{
-//         editions: [15, 20]
-//     }, {
-//         editions: [30, 40]
-//     }];
-
-//     albums = albums[mapOperatorKey].editions[mapOperatorKey][mapOperatorKey](edition => edition * 10);
-
-//     // console.log(albums);
-
-//     t.deepEqual(albums, [{
-//         editions: [150, 200]
-//     }, {
-//         editions: [300, 400]
-//     }]);
 // });
