@@ -113,12 +113,12 @@ test('keep record of index in map operator when used on deep objects', t => {
     t.deepEqual(result, [{ a: 11 }, { a: 22 }, { a: 33 }, { a: 44 }, { a: 55 }]);
 });
 
-// test('keep record of index in map operator when used on even deeper objects', t => {
-//     let list = [{ a: { b: 10 } }, { a: { b: 20 } }, { a: { b: 30 } }, { a: { b: 40 } }, { a: { b: 50 } }];
-//     let result = list[mapOperatorKey].a.b[mapOperatorKey]((n, i) => i + n + 1);
+test('keep record of index in map operator when used on even deeper objects', t => {
+    let list = [{ a: { b: 10 } }, { a: { b: 20 } }, { a: { b: 30 } }, { a: { b: 40 } }, { a: { b: 50 } }];
+    let result = list[mapOperatorKey].a.b[mapOperatorKey]((n, i) => i + n + 1);
 
-//     t.deepEqual(result, [{ a: { b: 11 } }, { a: { b: 22 } }, { a: { b: 33 } }, { a: { b: 44 } }, { a: { b: 55 } }]);
-// });
+    t.deepEqual(result, [{ a: { b: 11 } }, { a: { b: 22 } }, { a: { b: 33 } }, { a: { b: 44 } }, { a: { b: 55 } }]);
+});
 
 test('set all properties in array of objects', t => {
     let list = [{ num: 1 }, { num: 2 }, { num: 3 }, { num: 4 }, { num: 5 }];
