@@ -80,18 +80,6 @@ test('property access', t => {
     t.deepEqual(list[mapOperatorKey].num, [undefined, undefined, 3]);
 });
 
-// test('fail to access null property', t => {
-//     let list = [
-//         {id: 1},
-//         {id: 2},
-//         null
-//     ];
-
-//     t.throws(list[mapOperatorKey].id);
-// });
-
-// ! ^ same but deep null
-
 test('custom function call on each object in array', t => {
     let list = [1, 2, 3, 4, 5];
     let result = list[mapOperatorKey](n => n * 2);
@@ -215,6 +203,18 @@ test('call array of functions', t => {
 
     t.deepEqual(greeted, ['hello, shiba', 'goodbye, shiba'])
 });
+
+test('fail to access null property', t => {
+    let list = [
+        {id: 1},
+        {id: 2},
+        null
+    ];
+
+    t.throws(list[mapOperatorKey].id);
+});
+
+// ! ^ same but deep null
 
 // test('deep access of index in array', t => {
 //     let list = [
