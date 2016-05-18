@@ -1,13 +1,12 @@
-// Map operator "[]"
 {
-
 'strict mode';
 
 const mapOperatorName = '_mapOperator';
 
-const nativePropertiesOfObject = Object.getOwnPropertyNames(Object.getPrototypeOf({}));
-const nativePropertiesOfFunction = Object.getOwnPropertyNames(Object.getPrototypeOf(Function));
-// 'map', 'forEach', '_mapOperator', '_mapOperatorContext',
+// Methods that should not be mapped to each object in the array
+const nativePropertiesOfObject = Object.getOwnPropertyNames(Object.prototype);
+const nativePropertiesOfFunction = Object.getOwnPropertyNames(Function.prototype);
+const allNativeProperties = [...nativePropertiesOfObject, ...nativePropertiesOfFunction];
 
 const exceptions = {
     // expectingFunction: new TypeError('Map operator expects function as argument')
@@ -21,7 +20,6 @@ const removeFromArray = (excludeList, array) => {
             array.splice(indexOfString, 1);
             indexOfString = array.indexOf(string);
         }
-
     });
 }
 
@@ -58,6 +56,10 @@ const typesInside = target => {
 };
 
 // Create record of the original object's context
+// base: the original array the map operator was called on
+// path: the path of the inner objects accessed.
+//       arr[].a[].b = [[a], [b], []]
+//       arr[].a.b   = [[a, b], []]
 const newMapOperatorContext = params => {
     Object.defineProperty(params.target, '_mapOperatorContext', {
         value: {
@@ -78,56 +80,36 @@ const setMapOperatorContext = params => {
 const getPropertyTypes = array => {
     let propertiesInArray = {};
     let getOwnPropertyTypes = (itemInArray, i) => {
-        // if (itemInArray === null) return;
-        // if (itemInArray === undefined) return;
+        if (itemInArray === null) return;
+        if (itemInArray === undefined) return;
 
         let isArray = itemInArray instanceof Array;
         let hasContext = '_mapOperatorContext' in array;
         let objPath = hasContext ? lastInArray(array._mapOperatorContext.paths) : [];
 
-
-        // let propertyIsFirstInPath = hasContext ? lastInArray(array._mapOperatorContext.paths).length === 0 : true;
-
         // If the array has a _mapOperatorContext and it is an array
         // then get the properties of each of the arrays n levels in.
-        // objPath.length...
         if (isArray) {
             objPath.forEach(property => {
                 itemInArray = itemInArray[0];
             });
         }
 
-        let itemProperties = Object.keys(itemInArray);
-        let propertiesInPrototype = Object.getOwnPropertyNames(Object.getPrototypeOf(itemInArray));
+        let ownPropertyNames = Object.getOwnPropertyNames(itemInArray);
+        let ownPropertyNamesInPrototype = Object.getOwnPropertyNames(Object.getPrototypeOf(itemInArray));
+        let allProperties = uniqueArray([...ownPropertyNames, ...ownPropertyNamesInPrototype]);
 
-        // Methods that should not be mapped to each object in the array
-        removeFromArray([...nativePropertiesOfObject, ...nativePropertiesOfFunction], propertiesInPrototype);
+        removeFromArray(allNativeProperties, allProperties);
 
         // For each property of this object,
         // record its type so its behavior can be set later
-        uniqueArray([...itemProperties, ...propertiesInPrototype])
-        .forEach(propertyName => {
+        allProperties.forEach(propertyName => {
             let property = itemInArray[propertyName];
 
             // Don't redefine the method if it has already
             // been defined in a prior object in the array.
-            if (propertyName in propertiesInArray) {
-                let existingType = propertiesInArray[propertyName];
+            if (propertyName in propertiesInArray) return;
 
-                if (existingType !== typeOf(property)) {
-                    // console.log(propertiesInArray[propertyName], property)
-                    // console.log(existingType, typeOf(property))
-                    
-                    throw propertyName + '. was ' + existingType + '. is ' + typeOf(property)
-                    //throwException(); //! untested
-                };
-            }
-
-            // If one of existingType and propertyType is a function
-            // and the other isn't, throw error.
-
-
-            if(propertyName === 'id') debugger;
             propertiesInArray[propertyName] = typeOf(property);
         });
     }
@@ -143,7 +125,6 @@ const mapOperatorBase = function() {
     let self = this;
     // obj[], obj[](...)
     let mappedArray = (...args) => {
-
         let hasContext = '_mapOperatorContext' in this;
         let baseArray = hasContext ? this._mapOperatorContext.base : this;
         let mapOperatorPaths = hasContext ? this._mapOperatorContext.paths : [];
@@ -152,23 +133,24 @@ const mapOperatorBase = function() {
         // Access a property in the chain as a map
         let accessProperty = (index) => {
             let propertiesPath = mapOperatorPaths[index];
-            let isLastPath = index === mapOperatorPaths.length - 1;
+            // Last path is empty, hence - 2
+            let isLastPath = index === mapOperatorPaths.length - 2;
             let lastProperty = lastInArray(propertiesPath);
 
             return (obj, i) => {
                 let targetObj = obj;
+                let typeOfLastProperty = typeOf(targetObj[lastProperty]);
 
                 propertiesPath.forEach((property, i) => {
-                    let isLastProperty = isLastPath && i === propertiesPath.length - 1;
+                    let isLastProperty = i === propertiesPath.length - 1;
 
-                    if (isLastProperty) return;
+                    if (isLastProperty && isLastPath) return;
+
                     targetObj = targetObj[property];
-
-                    //throw error here
                 });
 
                 if (isLastPath) {
-                    if (typeof targetObj[lastProperty] === 'function') {
+                    if (typeOfLastProperty === 'function') {
                         targetObj = targetObj[lastProperty](...args);
                     } else {
                         targetObj[lastProperty] = args[0].call(this, targetObj[lastProperty], i);
@@ -189,9 +171,6 @@ const mapOperatorBase = function() {
             return baseArray.map(args[0]);
         }
 
-        // empty path at end (last path) should instead trigger .map(fn) or fn.call(this, targetObj, i)
-        mapOperatorPaths.splice(-1);
-
         // obj[].a[](...)
         return baseArray.map(accessProperty(0));
     };
@@ -208,9 +187,8 @@ const mapOperatorBase = function() {
                 get() {
                     let target = parentIsAProperty ? this : self;
                     let shouldUnwap = !parentIsAProperty && this._mapOperatorContext.paths.length > 1;
-
                     //! v forEach this._mapOperatorContext.paths? try with really deep arrays
-                    let mappedArray =  target.map(objInArray => {
+                    let mappedArray = target.map(objInArray => {
                         return shouldUnwap ? objInArray[mapOperatorName][propertyName] : objInArray[propertyName];
                     });
 
