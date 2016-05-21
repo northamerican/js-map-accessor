@@ -1,14 +1,14 @@
 {
-  "name": "js-map-operator",
+  "name": "js-map-accessor",
   "version": "1.0.0",
   "description": "A proposed extension to bracket notation accessors in Javascript.",
-  "main": "map-operator.js",
+  "main": "map-accessor.js",
   "scripts": {
     "test": "test.js && ava"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/northamerican/js-map-operator.git"
+    "url": "git+https://github.com/northamerican/js-map-accessor.git"
   },
   "keywords": [
     "js",
@@ -17,14 +17,14 @@
     "es",
     "proposed",
     "proposal",
-    "operator"
+    "accessor"
   ],
   "author": "northamerican",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/northamerican/js-map-operator/issues"
+    "url": "https://github.com/northamerican/js-map-accessor/issues"
   },
-  "homepage": "https://github.com/northamerican/js-map-operator#readme",
+  "homepage": "https://github.com/northamerican/js-map-accessor#readme",
   "devDependencies": {
     "ava": "^0.14.0"
   }

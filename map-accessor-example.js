@@ -4,13 +4,13 @@ if(typeof document !== 'undefined') {
     var $codeSubmit = document.getElementById('code-submit');
 }
 
-var convertMapOperator = code => {
-    var mapOperator = /\[\]/g;
-    // Not a perfect way to detect usage of [] operator but good enough for a demo
-    var mapOperatorHook = /[^\s=:](\[\])+/g;
+var convertMapAccessor = code => {
+    var mapAccessor = /\[\]/g;
+    // Not a perfect way to detect usage of [] accessor but good enough for a demo
+    var mapAccessorHook = /[^\s=:](\[\])+/g;
 
-    code.replace(mapOperatorHook, function(match) {
-        var replaceWith = match.replace(mapOperator, "[\'_mapOperator\']");
+    code.replace(mapAccessorHook, function(match) {
+        var replaceWith = match.replace(mapAccessor, "[\'_mapAccessor\']");
 
         code = code.replace(match, replaceWith)
     });
@@ -18,7 +18,7 @@ var convertMapOperator = code => {
     return code;
 }
 var evaledCodeResult = () => {
-	var evaled = window.eval(convertMapOperator($codeInput.value));
+	var evaled = window.eval(convertMapAccessor($codeInput.value));
 
 	console.log(evaled);
 
@@ -41,5 +41,5 @@ if(typeof document !== 'undefined') {
 }
 
 if(typeof module !== 'undefined') {
-    module.exports = convertMapOperator;
+    module.exports = convertMapAccessor;
 }

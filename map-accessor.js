@@ -1,14 +1,14 @@
 {
 'use strict';
 
-const mapOperatorName = '_mapOperator';
+const mapAccessorName = '_mapAccessor';
 
 // Methods that should not be mapped to each object when using map accessor
 // to prevent recursion and other weirdness.
 const nativePropertiesOfObject = Object.getOwnPropertyNames(Object.prototype);
 const nativePropertiesOfFunction = Object.getOwnPropertyNames(Function.prototype);
 const nativeSymbolsOfSymbol = Object.getOwnPropertySymbols(Symbol.prototype);
-const internalProperties = [mapOperatorName, '_mapOperatorContext'];
+const internalProperties = [mapAccessorName, '_mapAccessorContext'];
 const allNativeProperties = [
     ...nativePropertiesOfObject,
     ...nativePropertiesOfFunction,
@@ -29,8 +29,8 @@ const throwNull = () => {
 // path: the path of the inner objects accessed.
 //       arr[].a[].b   path: [[a], [b]]
 //       arr[].a.b[]   path: [[a, b], []]
-const newMapOperatorContext = params => {
-    Object.defineProperty(params.target, '_mapOperatorContext', {
+const newMapAccessorContext = params => {
+    Object.defineProperty(params.target, '_mapAccessorContext', {
         value: {
             base: params.base,
             paths: [[]]
@@ -39,9 +39,9 @@ const newMapOperatorContext = params => {
 };
 
 // Target inherits record of the original object's context
-const setMapOperatorContext = params => {
-    Object.defineProperty(params.target, '_mapOperatorContext', {
-        value: params.base._mapOperatorContext
+const setMapAccessorContext = params => {
+    Object.defineProperty(params.target, '_mapAccessorContext', {
+        value: params.base._mapAccessorContext
     });
 };
 
@@ -52,7 +52,7 @@ const get = function() {
 
     // arr[](), arr[].arr2[]()
     let mappedArrayFn = function(...args) {
-        let hasContext = '_mapOperatorContext' in this;
+        let hasContext = '_mapAccessorContext' in this;
         let base = this;
         let paths = [];
         let hasPath = false;
@@ -86,8 +86,8 @@ const get = function() {
         };
 
         if (hasContext) {
-            base = this._mapOperatorContext.base;
-            paths = this._mapOperatorContext.paths;
+            base = this._mapAccessorContext.base;
+            paths = this._mapAccessorContext.paths;
             hasPath = flattenArray(paths).length > 0;
         }
 
@@ -107,7 +107,7 @@ const get = function() {
     // target = arr[]
     // property = 'a'
     let get = function(target, property) {
-        let paths = target._mapOperatorContext.paths;
+        let paths = target._mapAccessorContext.paths;
         let isDeepMapped = paths.length > 1; // arr[].a[].b
         let isDeepObj = lastInArray(paths).length > 0; // arr[].a.b
         let mappedArrayValue;
@@ -126,7 +126,7 @@ const get = function() {
         if (isDeepObj) {
             mappedArrayValue = target.map(value => value === null ? throwNull() : value[property]);
         } else if (isDeepMapped) {
-            mappedArrayValue = originalArray.map(value => value[mapOperatorName][property]);
+            mappedArrayValue = originalArray.map(value => value[mapAccessorName][property]);
         } else {
             mappedArrayValue = originalArray.map(value => value === null ? throwNull() : value[property]);
         }
@@ -143,11 +143,11 @@ const get = function() {
         // arr[].a.b...
         let mappedArray = new Proxy(mappedArrayValue, { get, set });
 
-        setMapOperatorContext({
+        setMapAccessorContext({
             target: mappedArray,
             base: target
         });
-        lastInArray(mappedArray._mapOperatorContext.paths).push(property);
+        lastInArray(mappedArray._mapAccessorContext.paths).push(property);
 
         return mappedArray;
     };
@@ -157,25 +157,25 @@ const get = function() {
     // property = 'a'
     // value = x
     let set = function(target, property, newValue) {
-        setMapOperatorContext({
+        setMapAccessorContext({
             target: target,
             base: target
         });
-        lastInArray(target._mapOperatorContext.paths).push(property);
+        lastInArray(target._mapAccessorContext.paths).push(property);
 
         return mappedArrayFn.call(target, value => newValue);
     };
 
     let mappedArray = new Proxy(mappedArrayFn, { get, set });
 
-    if ('_mapOperatorContext' in originalArray) {
-        setMapOperatorContext({
+    if ('_mapAccessorContext' in originalArray) {
+        setMapAccessorContext({
             target: mappedArray,
             base: originalArray
         });
-        mappedArray._mapOperatorContext.paths.push([]);
+        mappedArray._mapAccessorContext.paths.push([]);
     } else {
-        newMapOperatorContext({
+        newMapAccessorContext({
             target: mappedArray,
             base: originalArray
         });
@@ -185,13 +185,13 @@ const get = function() {
 };
 // arr[] = x
 const set = function(value) {
-    let newValue = this[mapOperatorName](target => value);
+    let newValue = this[mapAccessorName](target => value);
     // Clear the original array
     this.splice(0);
     // Replace the contents of the array with the desired value
     this.push(...newValue);
 };
 
-Object.defineProperty(Array.prototype, mapOperatorName, { get, set });
+Object.defineProperty(Array.prototype, mapAccessorName, { get, set });
 
 };
