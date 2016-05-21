@@ -20,7 +20,7 @@ const flattenArray = array => [].concat(...array);
 const lastInArray = array => array[array.length - 1];
 const isArrayOfFunctions = array => array.every(target => typeof target === 'function');
 const throwNull = () => {
-    throw TypeError(`Cannot access null property using map accessor`);
+    throw TypeError('Cannot access properties of null using map accessor');
 }
 
 // Create record of the original object's context
@@ -67,7 +67,7 @@ const get = function() {
             return (target, i) => {
                 let targetObj = target;
 
-                propertiesPath.forEach((property, i) => {
+                propertiesPath.forEach(property => {
                     let isLastProperty = property === lastInArray(propertiesPath);
 
                     if (isLastProperty && isLastPath) return;
@@ -126,14 +126,20 @@ const get = function() {
         if (isDeepObj) {
             mappedArrayValue = target.map(value => value === null ? throwNull() : value[property]);
         } else if (isDeepMapped) {
-            mappedArrayValue = originalArray.map(value => value[mapAccessorName][property]);
+            mappedArrayValue = originalArray.map(value => {
+                if (typeof value[property] === 'function') {
+                    return value[property];
+                } else {
+                    return value[mapAccessorName][property];
+                }
+            });
         } else {
             mappedArrayValue = originalArray.map(value => value === null ? throwNull() : value[property]);
         }
 
         // arr[].a();
         if (isArrayOfFunctions(mappedArrayValue)) {
-            return (...args) => {
+            mappedArrayValue = (...args) => {
                 return originalArray.map(value => {
                     return value[property](...args);
                 });

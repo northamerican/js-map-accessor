@@ -24,7 +24,7 @@ test('arr[]()', t => {
     t.deepEqual(greeted, ['hello, shiba', 'goodbye, shiba'])
 });
 
-test('arr[](n => {})', t => {
+test('arr[](n => x)', t => {
     let list = [1, 2, 3, 4, 5];
     let result = list[mapAccessorName](n => n * 2);
 
@@ -106,6 +106,22 @@ test('arr[].a = x', t => {
     t.deepEqual([players[0].mood, players[1].mood], ['angry', 'angry']);
 });
 
+test('arr[].a[].native(x)', t => {
+    let list = [{
+        a: [1, 2]
+    }, {
+        a: [1, 2]
+    }]
+
+    list[mapAccessorName].a[mapAccessorName].push(3);
+
+    t.deepEqual(list, [{
+        a: [1, 2, 3]
+    }, {
+        a: [1, 2, 3]
+    }]);
+});
+
 test('arr[].a.b', t => {
     let list = [
         { a: { b: 10 } },
@@ -138,7 +154,7 @@ test('arr[].a[].b', t => {
     t.deepEqual(result, [[10, 15], [20, 25]]);
 });
 
-test('arr[].a[].b[](n => {})', t => {
+test('arr[].a[].b[](n => x)', t => {
     let list = [
         { a: [{ b: 10 }, { b: 15 }] },
         { a: [{ b: 20 }, { b: 25 }] }
@@ -164,7 +180,7 @@ test('arr[].a[].b.c', t => {
     ]);
 });
 
-test('arr[].a[].b.c[](n => {})', t => {
+test('arr[].a[].b.c[](n => x)', t => {
     let list = [
         { a: [{ b: { c: 10 } }, { b: { c: 15 } }] },
         { a: [{ b: { c: 20 } }, { b: { c: 25 } }] }
@@ -178,7 +194,7 @@ test('arr[].a[].b.c[](n => {})', t => {
 });
 
 
-test('arr[].a.b[](n => {})', t => {
+test('arr[].a.b[](n => x)', t => {
     let list = [
         { a: { b: 10 } },
         { a: { b: 15 } }
@@ -193,17 +209,33 @@ test('arr[].a.b[](n => {})', t => {
 });
 
 test('arr[].a[]((n, i) => {})', t => {
-    let list = [{ a: 10 }, { a: 20 }, { a: 30 }, { a: 40 }, { a: 50 }];
+    let list = [
+        { a: 10 },
+        { a: 20 },
+        { a: 30 }
+    ];
     let result = list[mapAccessorName].a[mapAccessorName]((n, i) => i + n + 1);
 
-    t.deepEqual(result, [{ a: 11 }, { a: 22 }, { a: 33 }, { a: 44 }, { a: 55 }]);
+    t.deepEqual(result, [
+        { a: 11 },
+        { a: 22 },
+        { a: 33 }
+    ]);
 });
 
 test('arr[].a.b[]((n, i) => {})', t => {
-    let list = [{ a: { b: 10 } }, { a: { b: 20 } }, { a: { b: 30 } }, { a: { b: 40 } }, { a: { b: 50 } }];
+    let list = [
+        { a: { b: 10 } },
+        { a: { b: 20 } },
+        { a: { b: 30 } }
+    ];
     let result = list[mapAccessorName].a.b[mapAccessorName]((n, i) => i + n + 1);
 
-    t.deepEqual(result, [{ a: { b: 11 } }, { a: { b: 22 } }, { a: { b: 33 } }, { a: { b: 44 } }, { a: { b: 55 } }]);
+    t.deepEqual(result, [
+        { a: { b: 11 } },
+        { a: { b: 22 } },
+        { a: { b: 33 } }
+    ]);
 });
 
 // Works but the test runner breaks
