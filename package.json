@@ -1,10 +1,10 @@
 {
   "name": "js-map-operator",
   "version": "1.0.0",
-  "description": "a proposed operator for js",
+  "description": "A proposed extension to bracket notation accessors in Javascript.",
   "main": "map-operator.js",
   "scripts": {
-    "test": "map-operator-test.js && ava"
+    "test": "test.js && ava"
   },
   "repository": {
     "type": "git",

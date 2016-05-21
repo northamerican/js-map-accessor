@@ -1,65 +1,34 @@
 {
-'strict mode';
+'use strict';
 
 const mapOperatorName = '_mapOperator';
 
-// Methods that should not be mapped to each object in the array
+// Methods that should not be mapped to each object when using map accessor
+// to prevent recursion and other weirdness.
 const nativePropertiesOfObject = Object.getOwnPropertyNames(Object.prototype);
 const nativePropertiesOfFunction = Object.getOwnPropertyNames(Function.prototype);
-const allNativeProperties = [...nativePropertiesOfObject, ...nativePropertiesOfFunction];
+const nativeSymbolsOfSymbol = Object.getOwnPropertySymbols(Symbol.prototype);
+const internalProperties = [mapOperatorName, '_mapOperatorContext'];
+const allNativeProperties = [
+    ...nativePropertiesOfObject,
+    ...nativePropertiesOfFunction,
+    ...nativeSymbolsOfSymbol,
+    ...internalProperties
+];
 
-const exceptions = {
-    // expectingFunction: new TypeError('Map operator expects function as argument')
-};
-
-const removeFromArray = (excludeList, array) => {
-    excludeList.forEach(string => {
-        let indexOfString = array.indexOf(string);
-
-        while (indexOfString !== -1) {
-            array.splice(indexOfString, 1);
-            indexOfString = array.indexOf(string);
-        }
-    });
+const flattenArray = array => [].concat(...array);
+const lastInArray = array => array[array.length - 1];
+const isArrayOfFunctions = array => array.every(target => typeof target === 'function');
+const throwNull = () => {
+    throw TypeError(`Cannot access null property using map accessor`);
 }
 
-const uniqueArray = array => {
-    return [...new Set(array)];
-};
-
-const lastInArray = array => {
-    let lastIndex = array.length - 1;
-
-    return array[lastIndex];
-};
-
-const throwException = () => {
-    throw '';
-};
-
-const typeOf = target => {
-    if (target === null) {
-        return 'null';
-    } else {
-        return typeof target;
-    }
-};
-
-const allInArrayAreEqual = array => {
-    let firstItem = array[0];
-    return array.every(item => item === firstItem);
-};
-
-const typesInside = target => {
-    let arrayOfTypes = target.map(typeOf);
-    return allInArrayAreEqual(arrayOfTypes) ? arrayOfTypes[0] : throwException();
-};
-
 // Create record of the original object's context
-// base: the original array the map operator was called on
+// Used for referencing the original array in mappedArrayFn
+// base: the original array the map accessor was called on
 // path: the path of the inner objects accessed.
-//       arr[].a[].b = [[a], [b], []]
-//       arr[].a.b   = [[a, b], []]
+//       arr[].a[].b   path: [[a], [b]]
+//       arr[].a.b[]   path: [[a, b], []]
 const newMapOperatorContext = params => {
     Object.defineProperty(params.target, '_mapOperatorContext', {
         value: {
@@ -69,80 +38,37 @@ const newMapOperatorContext = params => {
     });
 };
 
-// Create record of the original object's context
+// Target inherits record of the original object's context
 const setMapOperatorContext = params => {
     Object.defineProperty(params.target, '_mapOperatorContext', {
         value: params.base._mapOperatorContext
     });
 };
 
-// Get the types of every property in each of the array's objects
-const getPropertyTypes = array => {
-    let propertiesInArray = {};
-    let getOwnPropertyTypes = (itemInArray, i) => {
-        if (itemInArray === null) return;
-        if (itemInArray === undefined) return;
+// arr[], arr[].arr2[]
+const get = function() {
+    // arr, arr2
+    const originalArray = this;
 
-        let isArray = itemInArray instanceof Array;
-        let hasContext = '_mapOperatorContext' in array;
-        let objPath = hasContext ? lastInArray(array._mapOperatorContext.paths) : [];
-
-        // If the array has a _mapOperatorContext and it is an array
-        // then get the properties of each of the arrays n levels in.
-        if (isArray) {
-            objPath.forEach(property => {
-                itemInArray = itemInArray[0];
-            });
-        }
-
-        let ownPropertyNames = Object.getOwnPropertyNames(itemInArray);
-        let ownPropertyNamesInPrototype = Object.getOwnPropertyNames(Object.getPrototypeOf(itemInArray));
-        let allProperties = uniqueArray([...ownPropertyNames, ...ownPropertyNamesInPrototype]);
-
-        removeFromArray(allNativeProperties, allProperties);
-
-        // For each property of this object,
-        // record its type so its behavior can be set later
-        allProperties.forEach(propertyName => {
-            let property = itemInArray[propertyName];
-
-            // Don't redefine the method if it has already
-            // been defined in a prior object in the array.
-            if (propertyName in propertiesInArray) return;
-
-            propertiesInArray[propertyName] = typeOf(property);
-        });
-    }
-
-    array.forEach(getOwnPropertyTypes);
-
-    return propertiesInArray;
-};
-
-// obj[]
-const mapOperatorBase = function() {
-    // `self` refers to the array on which the map operator was used.
-    let self = this;
-    // obj[], obj[](...)
-    let mappedArray = (...args) => {
+    // arr[](), arr[].arr2[]()
+    let mappedArrayFn = function(...args) {
         let hasContext = '_mapOperatorContext' in this;
-        let baseArray = hasContext ? this._mapOperatorContext.base : this;
-        let mapOperatorPaths = hasContext ? this._mapOperatorContext.paths : [];
-        let hasPath = hasContext ? [].concat(...mapOperatorPaths).length > 0 : false;
+        let base = this;
+        let paths = [];
+        let hasPath = false;
 
         // Access a property in the chain as a map
         let accessProperty = (index) => {
-            let propertiesPath = mapOperatorPaths[index];
-            // Last path is empty, hence - 2
-            let isLastPath = index === mapOperatorPaths.length - 2;
+            let propertiesPath = paths[index];
+            // Last path is empty and 'length' is one larger than index, hence '- 2'
+            let isLastPath = index >= paths.length - 2;
             let lastProperty = lastInArray(propertiesPath);
 
-            return (obj, i) => {
-                let targetObj = obj;
-                let typeOfLastProperty = typeOf(targetObj[lastProperty]);
+            return (target, i) => {
+                let targetObj = target;
 
                 propertiesPath.forEach((property, i) => {
-                    let isLastProperty = i === propertiesPath.length - 1;
+                    let isLastProperty = property === lastInArray(propertiesPath);
 
                     if (isLastProperty && isLastPath) return;
 
@@ -150,118 +76,122 @@ const mapOperatorBase = function() {
                 });
 
                 if (isLastPath) {
-                    if (typeOfLastProperty === 'function') {
-                        targetObj = targetObj[lastProperty](...args);
-                    } else {
-                        targetObj[lastProperty] = args[0].call(this, targetObj[lastProperty], i);
-                    }
+                    targetObj[lastProperty] = args[0].call(this, targetObj[lastProperty], i);
                 } else {
                     targetObj = targetObj.map(accessProperty(index + 1));
                 }
 
-                return obj;
+                return target;
             };
         };
 
-        // obj[](...)
-        if (!hasPath) {
-            if (typesInside(this) === 'function') {
-                return this.map(fn => fn(...args));
-            }
-            return baseArray.map(args[0]);
+        if (hasContext) {
+            base = this._mapOperatorContext.base;
+            paths = this._mapOperatorContext.paths;
+            hasPath = flattenArray(paths).length > 0;
         }
 
-        // obj[].a[](...)
-        return baseArray.map(accessProperty(0));
+        // arr[]()
+        if (!hasPath) {
+            if (isArrayOfFunctions(this)) {
+                return this.map(fn => fn(...args));
+            }
+            return base.map(args[0]);
+        }
+
+        // arr[].arr2[]()
+        return base.map(accessProperty(0));
     };
 
-    let makeProperties = params => {
-        let properties = Object.keys(params.properties);
+    // arr[].a
+    // target = arr[]
+    // property = 'a'
+    let get = function(target, property) {
+        let paths = target._mapOperatorContext.paths;
+        let isDeepMapped = paths.length > 1; // arr[].a[].b
+        let isDeepObj = lastInArray(paths).length > 0; // arr[].a.b
+        let mappedArrayValue;
 
-        properties.forEach(propertyName => {
-            let propertyType = params.properties[propertyName];
-            let parentIsAProperty = params.parentIsAProperty;
+        // Don't use map accessor when accessing certain properties
+        if (allNativeProperties.includes(property)) {
+            return target[property];
+        }
 
-            Object.defineProperty(params.target, propertyName, {
-                // obj[].property, obj[].property.property...
-                get() {
-                    let target = parentIsAProperty ? this : self;
-                    let shouldUnwap = !parentIsAProperty && this._mapOperatorContext.paths.length > 1;
-                    //! v forEach this._mapOperatorContext.paths? try with really deep arrays
-                    let mappedArray = target.map(objInArray => {
-                        return shouldUnwap ? objInArray[mapOperatorName][propertyName] : objInArray[propertyName];
-                    });
+        // Disable access by index
+        // Removing causes recursion in ava test runner
+        if (Number.isInteger(Number(property))) {
+            return target[property];
+        }
 
-                    if (propertyType === 'function') {
-                        mappedArray = (...args) => {
-                            return self.map(objInArray => {
-                                return objInArray[propertyName](...args);
-                            });
-                        }
-                    }
+        if (isDeepObj) {
+            mappedArrayValue = target.map(value => value === null ? throwNull() : value[property]);
+        } else if (isDeepMapped) {
+            mappedArrayValue = originalArray.map(value => value[mapOperatorName][property]);
+        } else {
+            mappedArrayValue = originalArray.map(value => value === null ? throwNull() : value[property]);
+        }
 
-                    // Inherit existing _mapOperatorContext
-                    setMapOperatorContext({
-                        target: mappedArray,
-                        base: this
-                    })
-                    // Add property to the context path
-                    lastInArray(mappedArray._mapOperatorContext.paths).push(propertyName);
+        // arr[].a();
+        if (isArrayOfFunctions(mappedArrayValue)) {
+            return (...args) => {
+                return originalArray.map(value => {
+                    return value[property](...args);
+                });
+            };
+        }
 
-                    if (propertyType === 'object') {
-                        // Make property getters and setters for properties inside
-                        makeProperties({
-                            properties: getPropertyTypes(mappedArray),
-                            target: mappedArray,
-                            parentIsAProperty: true
-                        });
-                    }
+        // arr[].a.b...
+        let mappedArray = new Proxy(mappedArrayValue, { get, set });
 
-                    return mappedArray;
-                },
-                // obj[].property = 42;
-                set(value) {
-                    let target = parentIsAProperty ? this : self;
-
-                    // Inherit existing _mapOperatorContext
-                    setMapOperatorContext({
-                        target: target,
-                        base: this
-                    });
-                    // Add property to the context path
-                    lastInArray(target._mapOperatorContext.paths).push(propertyName);
-
-                    return target[mapOperatorName](item => value);
-                }
-            });
-        });
-    };
-
-    // Create getters/setters or functions mapped to each
-    // of the original array's object's properties.
-    makeProperties({
-        properties: getPropertyTypes(this),
-        target: mappedArray,
-    });
-
-    if ('_mapOperatorContext' in this) {
         setMapOperatorContext({
             target: mappedArray,
-            base: this
+            base: target
+        });
+        lastInArray(mappedArray._mapOperatorContext.paths).push(property);
+
+        return mappedArray;
+    };
+
+    // arr[].a = x
+    // target = arr[]
+    // property = 'a'
+    // value = x
+    let set = function(target, property, newValue) {
+        setMapOperatorContext({
+            target: target,
+            base: target
+        });
+        lastInArray(target._mapOperatorContext.paths).push(property);
+
+        return mappedArrayFn.call(target, value => newValue);
+    };
+
+    let mappedArray = new Proxy(mappedArrayFn, { get, set });
+
+    if ('_mapOperatorContext' in originalArray) {
+        setMapOperatorContext({
+            target: mappedArray,
+            base: originalArray
         });
         mappedArray._mapOperatorContext.paths.push([]);
     } else {
         newMapOperatorContext({
             target: mappedArray,
-            base: this
+            base: originalArray
         });
     }
 
     return mappedArray;
 };
+// arr[] = x
+const set = function(value) {
+    let newValue = this[mapOperatorName](target => value);
+    // Clear the original array
+    this.splice(0);
+    // Replace the contents of the array with the desired value
+    this.push(...newValue);
+};
 
-Object.defineProperty(Array.prototype, mapOperatorName, {
-    get: mapOperatorBase
-});
+Object.defineProperty(Array.prototype, mapOperatorName, { get, set });
 
 };
