@@ -135,20 +135,22 @@ fnArr[](15, 8);
 
 ### Set properties
 
-Set each property in each object in an array:
+Set each property in each object in an array,
+even if they are new.
 ```js
 arr = [{ a: 0 }, { a: 0 }];
 ```
 ```js
-arr[].a = 42;
+arr[].b = 42;
 
-arr[].a; 
+arr;
 
-> [42, 42];
+> [{ a: 0, b: 42 }, { a: 0, b: 42 }];
 ```
 
 
 Set each property in a multidimensional array:
+*this still needs to be implemented.
 ```js
 arr = [{
     a: [0, 0]
