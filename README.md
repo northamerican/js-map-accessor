@@ -8,7 +8,7 @@ The map accessor allows accessing properties and calling methods on nested objec
 
 Map a property from each object in an array to a new array:
 ```js
-let players = [
+players = [
     {id: 1, mood: 'happy'},
     {id: 2, mood: 'sad'},
     {id: 3}
@@ -61,7 +61,7 @@ arr[].a[1].b;
 
 Call a method in each object in an array:
 ```js
-let Player = function() {
+Player = function() {
     this.mood = 'sad';
 };
 Player.prototype.setMood = function(mood) {
@@ -99,7 +99,7 @@ arr[].a
 
 Call map function on nested properties in an array:
 ```js
-let arr = [
+arr = [
     { a: [{ b: 10 }, { b: 15 }] },
     { a: [{ b: 20 }, { b: 25 }] }
 ];
@@ -155,6 +155,10 @@ arr[].a[][] = 42;
     a: [42, 42]
 }];
 ```
+
+##Requirements
+A browser supporting JS [Proxies](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Proxy).
+Recent versions of Chrome, Firefox and Edge.
 
 ##How to use
 - Install the map accessor babel plugin
