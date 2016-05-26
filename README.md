@@ -1,111 +1,165 @@
-# JS Map operator `[]`
-A proposed JS operator with shim
+# Javascript map accessor `[]`
+A proposed extension to bracket notation accessors in Javascript.
 
-The JS map operator allows property access and method execution on all objects in an array.
-
-<a href="https://cdn.rawgit.com/northamerican/js-map-operator/master/index.html">**Demo**</a>
-Outputs in console.
+The map accessor allows accessing properties and calling methods on nested objects with a simple syntax. 
 
 ##Examples
-###Method call
-```js
-Player = class Player {
-    constructor() {
-        this.mood = 'sad';
-    }
-
-    setMood(mood) {
-        this.mood = mood;
-        return this.mood;
-    }
-}
-
-let players = [new Player(), new Player()];
-```
-
-Set mood for all players:
-```js
-players.forEach(player => player.setMood('happy'));
-```
-with `[]` map operator:
-```js
-players[].setMood('happy');
-```
-
 ###Property access
+
+Map a property from each object in an array to a new array.
 ```js
-let list = [
-    {id: 1},
-    {id: 2},
-    null,
-    {num: 3}
+let players = [
+    {id: 1, mood: 'happy'},
+    {id: 2, mood: 'sad'},
+    {id: 3}
 ];
 ```
-Standard Array map, ignoring `null` and assuming `[]` would fail silently on missing properties:
 ```js
-list.map(p => p === null ? null : p.id);
-``` 
-with `[]` map operator:
-```js
-list[].id;
-```
-output:
-`> [1, 2, null, undefined]`
+players[].mood;
 
-###Custom method call
-```js
-let list = [1, 2, 3, 4, 5];
-```
-Alter and overwrite numbers in an array:
-```js
-list = list.map(n => n * 2)
-```
-with `[]` map operator:
-```js
-list[](n => n * 2)
+> ['happy', 'sad', undefined];
 ```
 
-###Deep property access
+
+Access properties deeply nested inside arrays
 ```js
-let products = [{
-    id: 100,
-    bins: [15, 16]
+arr = [{
+    a: [
+        { b: { c: 10 } },
+        { b: { c: 15 } }
+    ]
 }, {
-    id: 200,
-    bins: [20, 22]
-}]
+    a: [
+        { b: { c: 20 } },
+        { b: { c: 25 } }
+    ]
+}];
+```
+```js
+arr[].a[].b.c;
+
+> [[10, 15], [20, 25]]
 ```
 
-Set the `bins` in all products to `[10]`:
+
+Access an index within multidimensional arrays
 ```js
-products.forEach(prod => prod.bins = [10])
+arr = [
+    { a: [{ b: 10 }, { b: 15 }] },
+    { a: [{ b: 20 }, { b: 25 }] },
+    { a: [{ b: 30 }, { b: 35 }] }
+];
 ```
 ```js
-products[].bins = [10]
+arr[].a[1].b; 
+
+> [15, 25, 35]
 ```
 
-Push a new `bin` "`30`" to all `products`:
+
+###Method calls
+
+Call a method in each object in an array
 ```js
-products.forEach(prod => prod.bins.push(30))
+let Player = function() {
+    this.mood = 'sad';
+};
+Player.prototype.setMood = function(mood) {
+    this.mood = mood;
+    return this.mood;
+};
 ```
 ```js
-products[].bins[].push(30)
+players[].setMood('happy');
+
+players.mood 
+> ['happy', 'happy'];
+
 ```
 
-Multiply each `bin` by `10`:
+
+Call native methods on each object in an array
 ```js
-products.forEach(prod => {
-    prod.bins = prod.bins.map(bin => bin * 10)
-})
+arr = [{
+    a: [1, 2]
+}, {
+    a: [1, 2]
+}];
+
 ```
 ```js
-products = products[].bins[][](bin => bin * 10)
+arr[].a.push(3);
+
+arr[].a 
+> [[1,2,3], [1,2,3]];
 ```
 
-##To-do
-- Babel plugin
-- Extend functionality to array-like objects like NodeList, to allow `$('div')[].style`
-- Allow silent failing on deep property access using Proxies
-- Tests!
-- A stricter mode that fails when there's a null or missing property
-- An even stricter mode that allow the map operator only on arrays containing objects of the same class
+
+###Map accessor call
+
+Call map function on nested properties in an array
+```js
+let arr = [
+    { a: [{ b: 10 }, { b: 15 }] },
+    { a: [{ b: 20 }, { b: 25 }] }
+];
+```
+```js
+arr[].a[].b[]((n, i) => i + n * 2);
+> [
+    { a: [{ b: 20 }, { b: 31 }] },
+    { a: [{ b: 42 }, { b: 53 }] }
+]
+```
+
+
+Call each function in an array with argument.
+```js
+fnArr = [(a, b) => a + b, (a, b) => a - b];
+```
+```js
+fnArr[](16, 8); 
+> [24, 8]
+
+```
+
+
+### Set properties
+
+Set each property in each object in an array
+```js
+arr = [{ a: 0 }, { a: 0 }];
+```
+```js
+arr[].a = 42;
+
+arr[].a; 
+> [{ a: 42 }, { a: 42 }];
+```
+
+
+Set each property in a multidimensional array
+
+```js
+arr = [{
+    a: [0, 0]
+}, {
+    a: [0, 0]
+}];
+
+```
+```js
+arr[].a[][] = 42;
+> [{
+    a: [42, 42]
+}, {
+    a: [42, 42]
+}];
+```
+
+##How to use
+- Install the map accessor babel plugin
+- Test without babel plugin: Use `['_mapAccessor']` instead of `[]`.
+
+##Issues
+- See issues or report one
