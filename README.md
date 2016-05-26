@@ -74,7 +74,7 @@ players = [new Player(), new Player()];
 ```js
 players[].setMood('happy');
 
-players.mood
+players[].mood
 
 > ['happy', 'happy'];
 
