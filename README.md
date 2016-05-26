@@ -120,12 +120,15 @@ arr[].a[].b[]((n, i) => i + n * 2);
 
 Call each function in an array, with arguments:
 ```js
-fnArr = [(a, b) => a + b, (a, b) => a - b];
+fnArr = [
+    (a, b) => a + b, 
+    (a, b) => a - b
+];
 ```
 ```js
-fnArr[](16, 8); 
+fnArr[](15, 8); 
 
-> [24, 8]
+> [23, 7]
 
 ```
 
