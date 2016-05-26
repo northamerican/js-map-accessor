@@ -99,7 +99,7 @@ arr[].a
 
 ###Map accessor call
 
-Call map function on nested properties in an array:
+Call `map` on nested properties in an array:
 ```js
 arr = [
     { a: [{ b: 10 }, { b: 15 }] },
