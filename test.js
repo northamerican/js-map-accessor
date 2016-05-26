@@ -1,5 +1,5 @@
 import test from 'ava';
-import './map-accessor';
+import './index';
 
 const mapAccessorName = '_mapAccessor';
 
@@ -25,15 +25,15 @@ test('arr[]()', t => {
 });
 
 test('arr[](n => x)', t => {
-    let list = [1, 2, 3, 4, 5];
-    let result = list[mapAccessorName](n => n * 2);
+    let arr = [1, 2, 3, 4, 5];
+    let result = arr[mapAccessorName](n => n * 2);
 
     t.deepEqual(result, [2, 4, 6, 8, 10]);
 });
 
 test('arr[]((n, i) => {})', t => {
-    let list = [10, 20, 30, 40, 50];
-    let result = list[mapAccessorName]((n, i) => i + n + 1);
+    let arr = [10, 20, 30, 40, 50];
+    let result = arr[mapAccessorName]((n, i) => i + n + 1);
 
     t.deepEqual(result, [11, 22, 33, 44, 55]);
 });
@@ -54,20 +54,20 @@ test('arr[].a', t => {
 });
 
 test('arr[].a w/ undefined', t => {
-    let list = [
+    let arr = [
         {id: 1},
         {id: 2},
         {num: 3}
     ];
 
-    t.deepEqual(list[mapAccessorName].id, [1, 2, undefined]);
-    t.deepEqual(list[mapAccessorName].num, [undefined, undefined, 3]);
+    t.deepEqual(arr[mapAccessorName].id, [1, 2, undefined]);
+    t.deepEqual(arr[mapAccessorName].num, [undefined, undefined, 3]);
 });
 
-test('arr[].a()', t => {
-    let list = [[0], [0], [0]];
+test('arr[].native(x)', t => {
+    let arr = [[0], [0], [0]];
 
-    let result = list[mapAccessorName](n => [10]);
+    let result = arr[mapAccessorName](n => [10]);
 
     result[mapAccessorName].push(20);
 
@@ -87,7 +87,60 @@ test('arr[].a(x)', t => {
     let result = players[mapAccessorName].setMood('happy');
 
     t.deepEqual([players[0].mood, players[1].mood], ['happy', 'happy']);
-    t.deepEqual(result, ['happy', 'happy']);
+    t.deepEqual(result, [{ mood: 'happy' }, { mood: 'happy' }]);
+});
+
+test('arr[].a[].b(x)', t => {
+    let Player = function() {
+        this.mood = 'sad';
+    }
+    Player.prototype.setMood = function(mood) {
+        this.mood = mood;
+        return this.mood;
+    }
+
+    let players = [{ a: [new Player(), new Player()] }, { a: [new Player(), new Player()] }];
+    let result = players[mapAccessorName].a[mapAccessorName].setMood('happy');
+
+    t.deepEqual(players[0].a[0].mood, 'happy');
+    t.deepEqual(result, [{
+        a: [
+            { mood: 'happy' },
+            { mood: 'happy' }
+        ]
+    }, {
+        a: [
+            { mood: 'happy' },
+            { mood: 'happy' }
+        ]
+    }]);
+});
+
+test('arr[].a[].b = x', t => {
+    let Player = function() {
+        this.mood = 'sad';
+    }
+    Player.prototype.setMood = function(mood) {
+        this.mood = mood;
+        return this.mood;
+    }
+
+    let players = [{ a: [new Player(), new Player()] }, { a: [new Player(), new Player()] }];
+
+    players[mapAccessorName].a[mapAccessorName].mood = 'happy';
+
+    t.deepEqual(players[0].a[0].mood, 'happy');
+    t.deepEqual(players, [{
+        a: [
+            { mood: 'happy' },
+            { mood: 'happy' }
+        ]
+    }, {
+        a: [
+            { mood: 'happy' },
+            { mood: 'happy' }
+        ]
+    }]);
 });
 
 test('arr[].a = x', t => {
@@ -106,16 +159,16 @@ test('arr[].a = x', t => {
     t.deepEqual([players[0].mood, players[1].mood], ['angry', 'angry']);
 });
 
-test('arr[].a[].native(x)', t => {
-    let list = [{
+test('arr[].a.native(x)', t => {
+    let arr = [{
         a: [1, 2]
     }, {
         a: [1, 2]
     }]
 
-    list[mapAccessorName].a[mapAccessorName].push(3);
+    arr[mapAccessorName].a.push(3);
 
-    t.deepEqual(list, [{
+    t.deepEqual(arr, [{
         a: [1, 2, 3]
     }, {
         a: [1, 2, 3]
@@ -123,43 +176,43 @@ test('arr[].a[].native(x)', t => {
 });
 
 test('arr[].a.b', t => {
-    let list = [
+    let arr = [
         { a: { b: 10 } },
         { a: { b: 15 } }
     ];
 
-    let result = list[mapAccessorName].a.b;
+    let result = arr[mapAccessorName].a.b;
 
     t.deepEqual(result, [10, 15]);
 });
 
 test('arr[].a.b.c', t => {
-    let list = [
+    let arr = [
         { a: { b: { c: 10 } } },
         { a: { b: { c: 15 } } }
     ];
 
-    let result = list[mapAccessorName].a.b.c;
+    let result = arr[mapAccessorName].a.b.c;
 
     t.deepEqual(result, [10, 15]);
 });
 
 test('arr[].a[].b', t => {
-    let list = [
+    let arr = [
         { a: [{ b: 10 }, { b: 15 }] },
         { a: [{ b: 20 }, { b: 25 }] }
     ];
-    let result = list[mapAccessorName].a[mapAccessorName].b
+    let result = arr[mapAccessorName].a[mapAccessorName].b
 
     t.deepEqual(result, [[10, 15], [20, 25]]);
 });
 
 test('arr[].a[].b[](n => x)', t => {
-    let list = [
+    let arr = [
         { a: [{ b: 10 }, { b: 15 }] },
         { a: [{ b: 20 }, { b: 25 }] }
     ];
-    let result = list[mapAccessorName].a[mapAccessorName].b[mapAccessorName](n => n * 2);
+    let result = arr[mapAccessorName].a[mapAccessorName].b[mapAccessorName](n => n * 2);
 
     t.deepEqual(result, [
         { a: [{ b: 20 }, { b: 30 }] },
@@ -168,11 +221,11 @@ test('arr[].a[].b[](n => x)', t => {
 });
 
 test('arr[].a[].b.c', t => {
-    let list = [
+    let arr = [
         { a: [{ b: { c: 10 } }, { b: { c: 15 } }] },
         { a: [{ b: { c: 20 } }, { b: { c: 25 } }] }
     ];
-    let result = list[mapAccessorName].a[mapAccessorName].b.c;
+    let result = arr[mapAccessorName].a[mapAccessorName].b.c;
 
     t.deepEqual(result, [
         [10, 15],
@@ -181,11 +234,11 @@ test('arr[].a[].b.c', t => {
 });
 
 test('arr[].a[].b.c[](n => x)', t => {
-    let list = [
+    let arr = [
         { a: [{ b: { c: 10 } }, { b: { c: 15 } }] },
         { a: [{ b: { c: 20 } }, { b: { c: 25 } }] }
     ];
-    let result = list[mapAccessorName].a[mapAccessorName].b.c[mapAccessorName](n => n * 2);
+    let result = arr[mapAccessorName].a[mapAccessorName].b.c[mapAccessorName](n => n * 2);
 
     t.deepEqual(result, [
         { a: [{ b: { c: 20 } }, { b: { c: 30 } }] },
@@ -195,12 +248,12 @@ test('arr[].a[].b.c[](n => x)', t => {
 
 
 test('arr[].a.b[](n => x)', t => {
-    let list = [
+    let arr = [
         { a: { b: 10 } },
         { a: { b: 15 } }
     ];
 
-    let result = list[mapAccessorName].a.b[mapAccessorName](n => 20);
+    let result = arr[mapAccessorName].a.b[mapAccessorName](n => 20);
 
     t.deepEqual(result, [
         { a: { b: 20 } },
@@ -209,12 +262,12 @@ test('arr[].a.b[](n => x)', t => {
 });
 
 test('arr[].a[]((n, i) => {})', t => {
-    let list = [
+    let arr = [
         { a: 10 },
         { a: 20 },
         { a: 30 }
     ];
-    let result = list[mapAccessorName].a[mapAccessorName]((n, i) => i + n + 1);
+    let result = arr[mapAccessorName].a[mapAccessorName]((n, i) => i + n + 1);
 
     t.deepEqual(result, [
         { a: 11 },
@@ -224,12 +277,12 @@ test('arr[].a[]((n, i) => {})', t => {
 });
 
 test('arr[].a.b[]((n, i) => {})', t => {
-    let list = [
+    let arr = [
         { a: { b: 10 } },
         { a: { b: 20 } },
         { a: { b: 30 } }
     ];
-    let result = list[mapAccessorName].a.b[mapAccessorName]((n, i) => i + n + 1);
+    let result = arr[mapAccessorName].a.b[mapAccessorName]((n, i) => i + n + 1);
 
     t.deepEqual(result, [
         { a: { b: 11 } },
@@ -238,75 +291,121 @@ test('arr[].a.b[]((n, i) => {})', t => {
     ]);
 });
 
-// Works but the test runner breaks
-// test('arr[].a[0].b', t => {
-//     let list = [
-//         { a: [{ b: 10 }, { b: 15 }] },
-//         { a: [{ b: 20 }, { b: 25 }] },
-//         { a: [{ b: 30 }, { b: 35 }] }
-//     ];
+test.skip('arr[].a[0].b', t => {
+    let arr = [
+        { a: [{ b: 10 }, { b: 15 }] },
+        { a: [{ b: 20 }, { b: 25 }] },
+        { a: [{ b: 30 }, { b: 35 }] }
+    ];
 
-//     list = list[mapAccessorName].a[1].b;
+    arr = arr[mapAccessorName].a[1].b;
 
-//     t.deepEqual(list, [15, 25, 35]);
-// });
+    t.deepEqual(arr, [15, 25, 35]);
+});
 
-// Works but the test runner breaks
-// test('arr[].a[0].b = x', t => {
-//     let list = [
-//         { a: [{ b: 10 }, { b: 15 }] },
-//         { a: [{ b: 20 }, { b: 25 }] },
-//         { a: [{ b: 30 }, { b: 35 }] }
-//     ];
+test.skip('arr[].a[0].b = x', t => {
+    let arr = [
+        { a: [{ b: 10 }, { b: 15 }] },
+        { a: [{ b: 20 }, { b: 25 }] },
+        { a: [{ b: 30 }, { b: 35 }] }
+    ];
 
-//     list[mapAccessorName].a[0].b = 5;
+    arr[mapAccessorName].a[0].b = 5;
 
-//     t.deepEqual(list, [
-//         { a: [{ b: 5 }, { b: 15 }] },
-//         { a: [{ b: 5 }, { b: 25 }] },
-//         { a: [{ b: 5 }, { b: 35 }] }
-//     ]);
-// });
+    t.deepEqual(arr, [
+        { a: [{ b: 5 }, { b: 15 }] },
+        { a: [{ b: 5 }, { b: 25 }] },
+        { a: [{ b: 5 }, { b: 35 }] }
+    ]);
+});
 
 test('arr[].a.b = x', t => {
-    let list = [
+    let arr = [
         { a: { b: 10 } },
         { a: { b: 15 } }
     ];
 
-    list[mapAccessorName].a.b = 20;
+    arr[mapAccessorName].a.b = 20;
 
-    t.deepEqual(list, [
+    t.deepEqual(arr, [
         { a: { b: 20 } },
         { a: { b: 20 } }
     ]);
 });
 
 test('arr[].new = x', t => {
-    let list = [{}, {}];
+    let arr = [{}, {}];
 
-    list[mapAccessorName].a = {};
-    list[mapAccessorName].a.b = 42;
+    arr[mapAccessorName].a = {};
+    arr[mapAccessorName].a.b = 42;
 
-    t.deepEqual(list, [{ a: { b: 42 } }, { a: { b: 42 } }]);
+    t.deepEqual(arr, [{ a: { b: 42 } }, { a: { b: 42 } }]);
 });
 
 test('arr[] = x', t => {
-    let list = [0, 0];
+    let arr = [0, 0];
 
-    list[mapAccessorName] = 42;
+    arr[mapAccessorName] = 42;
 
-    t.deepEqual(list, [42, 42]);
+    t.deepEqual(arr, [42, 42]);
 });
 
-test('fail to access null property', t => {
+test.skip('arr[].a[][] = x', t => {
+    let arr = [{
+        a: [10, 15]
+    }, {
+        a: [20, 25]
+    }];
+
+    arr[mapAccessorName].a[mapAccessorName][mapAccessorName] = 5;
+
+    t.deepEqual(arr, [{
+        a: [5, 5]
+    }, {
+        a: [5, 5]
+    }]);
+});
+
+test.skip('arr[].a[][](n => x)', t => {
+    let arr = [{
+        a: [10, 15]
+    }, {
+        a: [20, 25]
+    }];
+
+    arr[mapAccessorName].a[mapAccessorName][mapAccessorName](n => n * 2);
+
+    t.deepEqual(arr, [{
+        a: [20, 30]
+    }, {
+        a: [40, 50]
+    }]);
+});
+
+test.skip('arr[].a[].n[]((n, i) => i)', t => {
+    arr = [
+        { a: [{n: 1}, {n: 1}, {n: 1}] },
+        { a: [{n: 1}, {n: 1}, {n: 1}] },
+        { a: [{n: 1}, {n: 1}, {n: 1}] },
+    ];
+
+    arr[mapAccessorName].a[mapAccessorName][mapAccessorName]((n, i) => i)
+
+    t.deepEqual(arr, [
+        { a: [{n: 1}, {n: 2}, {n: 3}] },
+        { a: [{n: 4}, {n: 5}, {n: 6}] },
+        { a: [{n: 7}, {n: 8}, {n: 9}] },
+    ]);
+});
+
+test('throw on null', t => {
     t.throws(() => {
-        let list = [
+        let arr = [
             {id: 1},
             {id: 2},
             null
         ];
 
-        list[mapAccessorName].id;
+        arr[mapAccessorName].id;
     });
 });

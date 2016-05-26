@@ -16,8 +16,9 @@ const allNativeProperties = [
     ...internalProperties
 ];
 
+const indices = array => array.length - 1;
 const flattenArray = array => [].concat(...array);
-const lastInArray = array => array[array.length - 1];
+const lastInArray = array => array[indices(array)];
 const isArrayOfFunctions = array => array.every(target => typeof target === 'function');
 const throwNull = () => {
     throw TypeError('Cannot access properties of null using map accessor');
@@ -52,27 +53,43 @@ const get = function() {
 
     // arr[](), arr[].arr2[]()
     let mappedArrayFn = function(...args) {
-        let hasContext = '_mapAccessorContext' in this;
         let base = this;
         let paths = [];
         let hasPath = false;
+        let hasContext = '_mapAccessorContext' in this;
+
+        if (hasContext) {
+            base = this._mapAccessorContext.base;
+            paths = this._mapAccessorContext.paths;
+            hasPath = flattenArray(paths).length > 0;
+        }
 
         // Access a property in the chain as a map
-        let accessProperty = (index) => {
-            let propertiesPath = paths[index];
-            // Last path is empty and 'length' is one larger than index, hence '- 2'
-            let isLastPath = index >= paths.length - 2;
-            let lastProperty = lastInArray(propertiesPath);
+        let accessProperty = (index = 0) => {
+            // arr[]()
+            if (!hasPath) {
+                // Pass args into each function in array
+                // ! this breaks "arr[] = x" if arr is an array of functions
+                if (isArrayOfFunctions(this)) {
+                    return fn => fn(...args);
+                }
+                return args[0];
+            }
+
+            let path = paths[index];
+            // - 1 because length is one more than last index and
+            // - 1 because the last path is always empty in this case
+            let isLastPath = index >= paths.length - 1 - 1; // trash
+            let lastProperty = lastInArray(path);
 
             return (target, i) => {
                 let targetObj = target;
 
-                propertiesPath.forEach(property => {
-                    let isLastProperty = property === lastInArray(propertiesPath);
+                // Recursively access inner properties of objects
+                path.forEach((property, i) => {
+                    let isLastProperty = i === indices(path) && isLastPath;
 
-                    if (isLastProperty && isLastPath) return;
-
-                    targetObj = targetObj[property];
+                    if (!isLastProperty) targetObj = targetObj[property];
                 });
 
                 if (isLastPath) {
@@ -85,22 +102,8 @@ const get = function() {
             };
         };
 
-        if (hasContext) {
-            base = this._mapAccessorContext.base;
-            paths = this._mapAccessorContext.paths;
-            hasPath = flattenArray(paths).length > 0;
-        }
-
-        // arr[]()
-        if (!hasPath) {
-            if (isArrayOfFunctions(this)) {
-                return this.map(fn => fn(...args));
-            }
-            return base.map(args[0]);
-        }
-
         // arr[].arr2[]()
-        return base.map(accessProperty(0));
+        return base.map(accessProperty());
     };
 
     // arr[].a
@@ -126,36 +129,56 @@ const get = function() {
         if (isDeepObj) {
             mappedArrayValue = target.map(value => value === null ? throwNull() : value[property]);
         } else if (isDeepMapped) {
-            mappedArrayValue = originalArray.map(value => {
-                if (typeof value[property] === 'function') {
-                    return value[property];
-                } else {
-                    return value[mapAccessorName][property];
-                }
-            });
+            mappedArrayValue = originalArray.map(value => value[mapAccessorName][property]);
         } else {
             mappedArrayValue = originalArray.map(value => value === null ? throwNull() : value[property]);
         }
 
+        lastInArray(target._mapAccessorContext.paths).push(property);
+
         // arr[].a();
         if (isArrayOfFunctions(mappedArrayValue)) {
+            // arr[].a(), arr[].a()
             mappedArrayValue = (...args) => {
-                return originalArray.map(value => {
-                    return value[property](...args);
-                });
+                let base = target._mapAccessorContext.base;
+                let paths = target._mapAccessorContext.paths;
+
+                // Access a property in the chain as a map
+                let accessProperty = (index = 0) => {
+                    let path = paths[index];
+                    let isLastPath = path === lastInArray(paths);
+                    let lastProperty = lastInArray(path);
+
+                    return (target, i) => {
+                        let targetObj = target;
+
+                        // Recursively access inner properties of objects
+                        path.forEach((property, i) => {
+                            let isLastProperty = i === indices(path) && isLastPath;
+
+                            if (!isLastProperty) targetObj = targetObj[property];
+                        });
+
+                        if (isLastPath) {
+                            targetObj = targetObj[lastProperty](...args);
+                        } else {
+                            targetObj = targetObj.map(accessProperty(index + 1));
+                        }
+
+                        return target;
+                    };
+                };
+
+                return base.map(accessProperty());
             };
         }
 
-        // arr[].a.b...
-        let mappedArray = new Proxy(mappedArrayValue, { get, set });
-
         setMapAccessorContext({
-            target: mappedArray,
+            target: mappedArrayValue,
             base: target
         });
-        lastInArray(mappedArray._mapAccessorContext.paths).push(property);
 
-        return mappedArray;
+        return new Proxy(mappedArrayValue, { get, set });
     };
 
     // arr[].a = x
@@ -168,26 +191,28 @@ const get = function() {
             base: target
         });
         lastInArray(target._mapAccessorContext.paths).push(property);
+        // hack. when called directly, mappedArrayFn will have an empty path at the end.
+        // in this case it is not present.
+        // mappedArrayFn should actually remove the last path if it's empty.
+        target._mapAccessorContext.paths.push([]);
 
         return mappedArrayFn.call(target, value => newValue);
     };
 
-    let mappedArray = new Proxy(mappedArrayFn, { get, set });
-
     if ('_mapAccessorContext' in originalArray) {
         setMapAccessorContext({
-            target: mappedArray,
+            target: mappedArrayFn,
             base: originalArray
         });
-        mappedArray._mapAccessorContext.paths.push([]);
+        mappedArrayFn._mapAccessorContext.paths.push([]);
     } else {
         newMapAccessorContext({
-            target: mappedArray,
+            target: mappedArrayFn,
             base: originalArray
         });
     }
 
-    return mappedArray;
+    return new Proxy(mappedArrayFn, { get, set });
 };
 // arr[] = x
 const set = function(value) {

@@ -1,6 +1,6 @@
 {
   "name": "js-map-accessor",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A proposed extension to bracket notation accessors in Javascript.",
   "main": "map-accessor.js",
   "scripts": {
@@ -26,6 +26,6 @@
   },
   "homepage": "https://github.com/northamerican/js-map-accessor#readme",
   "devDependencies": {
-    "ava": "^0.14.0"
+    "ava": "^0.15.0"
   }
 }
