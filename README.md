@@ -118,7 +118,7 @@ arr[].a[].b[]((n, i) => i + n * 2);
 ```
 
 
-Call each function in an array with argument:
+Call each function in an array, with arguments:
 ```js
 fnArr = [(a, b) => a + b, (a, b) => a - b];
 ```
