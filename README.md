@@ -6,7 +6,7 @@ The map accessor allows accessing properties and calling methods on nested objec
 ##Examples
 ###Property access
 
-Map a property from each object in an array to a new array.
+Map a property from each object in an array to a new array:
 ```js
 let players = [
     {id: 1, mood: 'happy'},
@@ -21,7 +21,7 @@ players[].mood;
 ```
 
 
-Access properties deeply nested inside arrays
+Access properties deeply nested inside arrays:
 ```js
 arr = [{
     a: [
@@ -42,7 +42,7 @@ arr[].a[].b.c;
 ```
 
 
-Access an index within multidimensional arrays
+Access an index within a multidimensional array:
 ```js
 arr = [
     { a: [{ b: 10 }, { b: 15 }] },
@@ -59,7 +59,7 @@ arr[].a[1].b;
 
 ###Method calls
 
-Call a method in each object in an array
+Call a method in each object in an array:
 ```js
 let Player = function() {
     this.mood = 'sad';
@@ -78,7 +78,7 @@ players.mood
 ```
 
 
-Call native methods on each object in an array
+Call native methods on each object in an array:
 ```js
 arr = [{
     a: [1, 2]
@@ -97,7 +97,7 @@ arr[].a
 
 ###Map accessor call
 
-Call map function on nested properties in an array
+Call map function on nested properties in an array:
 ```js
 let arr = [
     { a: [{ b: 10 }, { b: 15 }] },
@@ -113,7 +113,7 @@ arr[].a[].b[]((n, i) => i + n * 2);
 ```
 
 
-Call each function in an array with argument.
+Call each function in an array with argument:
 ```js
 fnArr = [(a, b) => a + b, (a, b) => a - b];
 ```
@@ -126,7 +126,7 @@ fnArr[](16, 8);
 
 ### Set properties
 
-Set each property in each object in an array
+Set each property in each object in an array:
 ```js
 arr = [{ a: 0 }, { a: 0 }];
 ```
@@ -138,8 +138,7 @@ arr[].a;
 ```
 
 
-Set each property in a multidimensional array
-
+Set each property in a multidimensional array:
 ```js
 arr = [{
     a: [0, 0]
