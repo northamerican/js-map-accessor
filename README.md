@@ -74,7 +74,8 @@ players = [new Player(), new Player()];
 ```js
 players[].setMood('happy');
 
-players.mood 
+players.mood
+
 > ['happy', 'happy'];
 
 ```
@@ -93,6 +94,7 @@ arr = [{
 arr[].a.push(3);
 
 arr[].a 
+
 > [[1,2,3], [1,2,3]];
 ```
 
@@ -108,6 +110,7 @@ arr = [
 ```
 ```js
 arr[].a[].b[]((n, i) => i + n * 2);
+
 > [
     { a: [{ b: 20 }, { b: 31 }] },
     { a: [{ b: 42 }, { b: 53 }] }
@@ -121,6 +124,7 @@ fnArr = [(a, b) => a + b, (a, b) => a - b];
 ```
 ```js
 fnArr[](16, 8); 
+
 > [24, 8]
 
 ```
@@ -136,6 +140,7 @@ arr = [{ a: 0 }, { a: 0 }];
 arr[].a = 42;
 
 arr[].a; 
+
 > [{ a: 42 }, { a: 42 }];
 ```
 
@@ -151,6 +156,7 @@ arr = [{
 ```
 ```js
 arr[].a[][] = 42;
+
 > [{
     a: [42, 42]
 }, {
