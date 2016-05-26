@@ -68,6 +68,8 @@ Player.prototype.setMood = function(mood) {
     this.mood = mood;
     return this.mood;
 };
+
+players = [new Player(), new Player()];
 ```
 ```js
 players[].setMood('happy');
