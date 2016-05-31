@@ -172,8 +172,7 @@ A browser supporting JS [Proxies](https://developer.mozilla.org/en/docs/Web/Java
 Recent versions of Chrome, Firefox and Edge.
 
 ##How to use
-- Install the map accessor babel plugin
-- Test without babel plugin: Use `['_mapAccessor']` instead of `[]`.
+- Use `['_mapAccessor']` instead of `[]`.
 
 ##Issues
 - See issues or report one
