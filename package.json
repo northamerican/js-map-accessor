@@ -15,12 +15,11 @@
     "ecmascript",
     "ecma",
     "es",
-    "proposed",
     "proposal",
     "accessor"
   ],
   "author": "northamerican",
-  "license": "UNLICENSED",
+  "license": "Unlicense",
   "bugs": {
     "url": "https://github.com/northamerican/js-map-accessor/issues"
   },

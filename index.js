@@ -22,29 +22,32 @@ const lastInArray = array => array[indices(array)];
 const isArrayOfFunctions = array => array.every(target => typeof target === 'function');
 const throwNull = () => {
     throw TypeError('Cannot access properties of null using map accessor');
-}
+};
 
 // Create record of the original object's context
 // Used for referencing the original array in mappedArrayFn
 // base: the original array the map accessor was called on
 // path: the path of the inner objects accessed.
-//       arr[].a[].b   path: [[a], [b]]
-//       arr[].a.b[]   path: [[a, b], []]
-const newMapAccessorContext = params => {
-    Object.defineProperty(params.target, '_mapAccessorContext', {
-        value: {
-            base: params.base,
-            paths: [[]]
-        }
+//       arr[].a[].b   paths: [[a], [b]]
+//       arr[].a.b[]   paths: [[a, b], []]
+const setMapAccessorContext = ({ target, base }) => {
+    Object.defineProperty(target, '_mapAccessorContext', {
+        value: getMapAccessorContext(base),
+        configurable: true
     });
+};
+// Get the original context and paths of an array
+// Return a new context if none exists
+const getMapAccessorContext = base => {
+    var context = base._mapAccessorContext;
+
+    return context || newMapAccessorContext(base);
 };
 
-// Target inherits record of the original object's context
-const setMapAccessorContext = params => {
-    Object.defineProperty(params.target, '_mapAccessorContext', {
-        value: params.base._mapAccessorContext
-    });
-};
+const newMapAccessorContext = base => ({
+    base: base,
+    paths: []
+});
 
 // arr[], arr[].arr2[]
 const get = function() {
@@ -53,16 +56,8 @@ const get = function() {
 
     // arr[](), arr[].arr2[]()
     let mappedArrayFn = function(...args) {
-        let base = this;
-        let paths = [];
-        let hasPath = false;
-        let hasContext = '_mapAccessorContext' in this;
-
-        if (hasContext) {
-            base = this._mapAccessorContext.base;
-            paths = this._mapAccessorContext.paths;
-            hasPath = flattenArray(paths).length > 0;
-        }
+        let { base, paths } = getMapAccessorContext(this);
+        let hasPath = flattenArray(paths).length > 0;
 
         // Access a property in the chain as a map
         let accessProperty = (index = 0) => {
@@ -140,8 +135,7 @@ const get = function() {
         if (isArrayOfFunctions(mappedArrayValue)) {
             // arr[].a(), arr[].a()
             mappedArrayValue = (...args) => {
-                let base = target._mapAccessorContext.base;
-                let paths = target._mapAccessorContext.paths;
+                let { base, paths } = getMapAccessorContext(target);
 
                 // Access a property in the chain as a map
                 let accessProperty = (index = 0) => {
@@ -199,18 +193,11 @@ const get = function() {
         return mappedArrayFn.call(target, value => newValue);
     };
 
-    if ('_mapAccessorContext' in originalArray) {
-        setMapAccessorContext({
-            target: mappedArrayFn,
-            base: originalArray
-        });
-        mappedArrayFn._mapAccessorContext.paths.push([]);
-    } else {
-        newMapAccessorContext({
-            target: mappedArrayFn,
-            base: originalArray
-        });
-    }
+    setMapAccessorContext({
+        target: mappedArrayFn,
+        base: originalArray
+    });
+    mappedArrayFn._mapAccessorContext.paths.push([]);
 
     return new Proxy(mappedArrayFn, { get, set });
 };
