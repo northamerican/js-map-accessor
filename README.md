@@ -3,8 +3,8 @@ A proposed extension to bracket notation accessors in Javascript.
 
 The map accessor allows accessing properties and calling methods on nested objects with a simple syntax. 
 
-##Examples
-###Property access
+## Examples
+### Property access
 
 Map a property from each object in an array to a new array:
 ```js
@@ -57,7 +57,7 @@ arr[].a[1].b;
 ```
 
 
-###Method calls
+### Method calls
 
 Call a method in each object in an array:
 ```js
@@ -99,7 +99,7 @@ arr[].a
 ```
 
 
-###Map accessor call
+### Map accessor call
 
 Call `map` on nested properties in an array:
 ```js
@@ -167,12 +167,12 @@ arr[].a;
 > [[42, 42] [42, 42]]
 ```
 
-##Requirements
+## Requirements
 A browser supporting JS [Proxies](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Proxy).
 Recent versions of Chrome, Firefox and Edge.
 
-##How to use
+## How to use
 - Use `['_mapAccessor']` instead of `[]`.
 
-##Issues
+## Issues
 - See issues or report one
